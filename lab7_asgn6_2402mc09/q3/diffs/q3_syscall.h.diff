@@ -1,0 +1,10 @@
+--- xv6-clean/syscall.h	2026-08-24 14:26:16.843241600 +0000
++++ asg6/q3-resourceorder/syscall.h	2026-09-13 15:36:06.355244700 +0000
+@@ -20,3 +20,7 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_shm_get 22
++#define SYS_sem_init 23
++#define SYS_sem_wait 24
++#define SYS_sem_signal 25
