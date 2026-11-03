@@ -1,0 +1,8 @@
+--- xv6-clean/syscall.h	2026-08-24 14:26:16.843241600 +0000
++++ asg10/q3-pagetable/syscall.h	2026-11-03 11:01:44.257789600 +0000
+@@ -20,3 +20,5 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_pageinfo 23
++#define SYS_setreadonly 24

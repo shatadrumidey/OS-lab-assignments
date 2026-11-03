@@ -1,0 +1,28 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg10/q3-pagetable/sysproc.c	2026-11-03 11:01:38.030867600 +0000
+@@ -89,3 +89,25 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_pageinfo(void)
++{
++  int va;
++  
++  if(argint(0, &va) < 0)
++    return -1;
++  
++  return pageinfo((uint)va);
++}
++
++int
++sys_setreadonly(void)
++{
++  int va;
++  
++  if(argint(0, &va) < 0)
++    return -1;
++  
++  return setreadonly((uint)va);
++}

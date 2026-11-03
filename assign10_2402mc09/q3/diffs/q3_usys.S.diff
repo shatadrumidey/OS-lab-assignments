@@ -1,0 +1,8 @@
+--- xv6-clean/usys.S	2026-08-24 14:26:16.961714700 +0000
++++ asg10/q3-pagetable/usys.S	2026-11-03 11:01:44.289415400 +0000
+@@ -29,3 +29,5 @@
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(pageinfo)
++SYSCALL(setreadonly)

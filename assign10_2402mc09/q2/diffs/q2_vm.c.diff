@@ -1,0 +1,30 @@
+--- xv6-clean/vm.c	2026-08-24 14:26:16.976258900 +0000
++++ asg10/q2-vtop/vm.c	2026-11-03 10:46:56.982646000 +0000
+@@ -392,3 +392,27 @@
+ //PAGEBREAK!
+ // Blank page.
+ 
++
++// Asg10 Q2: Translate virtual address to physical address
++int
++vtop(uint va)
++{
++  pte_t *pte;
++  uint pa;
++  struct proc *cur = myproc();
++  
++  if(cur == 0)
++    return -1;
++  
++  // Walk the page table to find the PTE
++  pte = walkpgdir(cur->pgdir, (void*)va, 0);
++  
++  // If PTE doesn't exist or is not present, return -1
++  if(pte == 0 || (*pte & PTE_P) == 0)
++    return -1;
++  
++  // Extract physical frame address from PTE and add offset
++  pa = PTE_ADDR(*pte) | (va & 0xFFF);
++  
++  return pa;
++}

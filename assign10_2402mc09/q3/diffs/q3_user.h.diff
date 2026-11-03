@@ -1,0 +1,11 @@
+--- xv6-clean/user.h	2026-08-24 14:26:16.939492100 +0000
++++ asg10/q3-pagetable/user.h	2026-11-03 11:01:44.337359100 +0000
+@@ -23,6 +23,8 @@
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
++int pageinfo(int);
++int setreadonly(int);
+ 
+ // ulib.c
+ int stat(const char*, struct stat*);

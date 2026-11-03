@@ -1,0 +1,24 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg10/q1-memtrack/sysproc.c	2026-11-03 10:02:12.704104000 +0000
+@@ -89,3 +89,21 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_memstats(void)
++{
++  int total_pages = ntotal_pages();
++  int free_pages = nfree_pages();
++  int allocated = get_total_allocated();
++  int freed = get_total_freed();
++  int current = allocated - freed;
++  cprintf("== Memory Statistics ==\n");
++  cprintf("Total pages managed:    %d\n", total_pages);
++  cprintf("Currently free:         %d\n", free_pages);
++  cprintf("Total allocated (ever): %d\n", allocated);
++  cprintf("Total freed (ever):     %d\n", freed);
++  cprintf("Currently allocated:    %d (allocated - freed)\n", current);
++  cprintf("=======================\n");
++  return 0;
++}

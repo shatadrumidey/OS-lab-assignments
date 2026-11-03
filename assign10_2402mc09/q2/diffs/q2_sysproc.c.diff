@@ -1,0 +1,17 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg10/q2-vtop/sysproc.c	2026-11-03 10:47:07.863177200 +0000
+@@ -89,3 +89,14 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_vtop(void)
++{
++  int va;
++  
++  if(argint(0, &va) < 0)
++    return -1;
++  
++  return vtop((uint)va);
++}

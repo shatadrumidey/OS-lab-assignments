@@ -1,0 +1,107 @@
+--- xv6-clean/kalloc.c	2026-08-24 14:26:16.530683200 +0000
++++ asg10/q1-memtrack/kalloc.c	2026-11-03 10:34:29.372784900 +0000
+@@ -1,7 +1,3 @@
+-// Physical memory allocator, intended to allocate
+-// memory for user processes, kernel stacks, page table pages,
+-// and pipe buffers. Allocates 4096-byte pages.
+-
+ #include "types.h"
+ #include "defs.h"
+ #include "param.h"
+@@ -9,9 +5,9 @@
+ #include "mmu.h"
+ #include "spinlock.h"
+ 
++void kinit1(void *vstart, void *vend);
++void kinit2(void *vstart, void *vend);
+ void freerange(void *vstart, void *vend);
+-extern char end[]; // first address after kernel loaded from ELF file
+-                   // defined by the kernel linker script in kernel.ld
+ 
+ struct run {
+   struct run *next;
+@@ -23,11 +19,13 @@
+   struct run *freelist;
+ } kmem;
+ 
+-// Initialization happens in two phases.
+-// 1. main() calls kinit1() while still using entrypgdir to place just
+-// the pages mapped by entrypgdir on free list.
+-// 2. main() calls kinit2() with the rest of the physical pages
+-// after installing a full page table that maps them on all cores.
++static int total_allocated = 0;
++static int total_freed = 0;
++static int total_pages = 0;
++static int free_pages = 0;
++
++extern char end[];
++
+ void
+ kinit1(void *vstart, void *vend)
+ {
+@@ -48,49 +46,50 @@
+ {
+   char *p;
+   p = (char*)PGROUNDUP((uint)vstart);
+-  for(; p + PGSIZE <= (char*)vend; p += PGSIZE)
++  for(; p + PGSIZE <= (char*)vend; p += PGSIZE){
++    total_pages++;
+     kfree(p);
++  }
+ }
+-//PAGEBREAK: 21
+-// Free the page of physical memory pointed at by v,
+-// which normally should have been returned by a
+-// call to kalloc().  (The exception is when
+-// initializing the allocator; see kinit above.)
++
+ void
+ kfree(char *v)
+ {
+   struct run *r;
+-
+   if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
+     panic("kfree");
+-
+-  // Fill with junk to catch dangling refs.
+   memset(v, 1, PGSIZE);
+-
+   if(kmem.use_lock)
+     acquire(&kmem.lock);
+   r = (struct run*)v;
+   r->next = kmem.freelist;
+   kmem.freelist = r;
++  free_pages++;
++  total_freed++;
+   if(kmem.use_lock)
+     release(&kmem.lock);
+ }
+ 
+-// Allocate one 4096-byte page of physical memory.
+-// Returns a pointer that the kernel can use.
+-// Returns 0 if the memory cannot be allocated.
+ char*
+ kalloc(void)
+ {
+   struct run *r;
+-
+   if(kmem.use_lock)
+     acquire(&kmem.lock);
+   r = kmem.freelist;
+-  if(r)
++  if(r){
+     kmem.freelist = r->next;
++    free_pages--;
++    total_allocated++;
++  }
+   if(kmem.use_lock)
+     release(&kmem.lock);
++  if(r)
++    memset((char*)r, 1, PGSIZE);
+   return (char*)r;
+ }
+ 
++int get_total_allocated(void) { return total_allocated; }
++int get_total_freed(void) { return total_freed; }
++int ntotal_pages(void) { return total_pages; }
++int nfree_pages(void) { return free_pages; }
