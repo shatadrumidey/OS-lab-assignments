@@ -1,0 +1,45 @@
+--- xv6-clean/vm.c	2026-08-24 14:26:16.976258900 +0000
++++ asg9/q2-lazy/vm.c	2026-10-27 10:10:48.536162800 +0000
+@@ -326,7 +326,7 @@
+     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+       panic("copyuvm: pte should exist");
+     if(!(*pte & PTE_P))
+-      panic("copyuvm: page not present");
++      continue;   // lazy: skip absent
+     pa = PTE_ADDR(*pte);
+     flags = PTE_FLAGS(*pte);
+     if((mem = kalloc()) == 0)
+@@ -392,3 +392,33 @@
+ //PAGEBREAK!
+ // Blank page.
+ 
++
++// Asg9 Q2: fault in one lazy heap page for the current process.
++// Returns 0 on success, -1 if invalid.
++int
++lazyalloc(uint va)
++{
++  struct proc *cur = myproc();
++  pte_t *pte;
++  char *mem;
++
++  if(cur == 0 || va >= cur->sz)
++    return -1;
++  pte = walkpgdir(cur->pgdir, (void*)va, 0);
++  if(pte && (*pte & PTE_P)){
++    if(*pte & PTE_U)
++      return 0;            // already there
++    return -1;             // guard page
++  }
++  mem = kalloc();
++  if(mem == 0)
++    return -1;
++  memset(mem, 0, PGSIZE);
++  if(mappages(cur->pgdir, (char*)PGROUNDDOWN(va), PGSIZE,
++              V2P(mem), PTE_W|PTE_U) < 0){
++    kfree(mem);
++    return -1;
++  }
++  cur->nfaults++;
++  return 0;
++}

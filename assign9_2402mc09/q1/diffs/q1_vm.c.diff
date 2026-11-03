@@ -1,0 +1,37 @@
+--- xv6-clean/vm.c	2026-08-24 14:26:16.976258900 +0000
++++ asg9/q1-ptprint/vm.c	2026-10-27 09:49:13.845987700 +0000
+@@ -392,3 +392,34 @@
+ //PAGEBREAK!
+ // Blank page.
+ 
++
++// Asg9 Q1: print page table of calling process (user pages only)
++void
++vmprint(pde_t *pgdir)
++{
++  int i, k, user_pages, pt_pages;
++  pte_t *pgtab;
++  uint va;
++  struct proc *cur = myproc();
++
++  user_pages = 0; pt_pages = 0;
++  cprintf("== page directory of pid %d ==\n", cur->pid);
++  for(i = 0; i < NPDENTRIES; i++){
++    if(!(pgdir[i] & PTE_P))
++      continue;
++    if((uint)(i << PDXSHIFT) >= KERNBASE)
++      continue;                              // skip kernel mappings
++    pt_pages++;                              // one page-table page per present PDE
++    pgtab = (pte_t*)P2V(PTE_ADDR(pgdir[i]));
++    for(k = 0; k < NPTENTRIES; k++){
++      if(!(pgtab[k] & PTE_P))
++        continue;
++      va = (i << PDXSHIFT) | (k << PTXSHIFT);
++      cprintf("  va=%x pa=%x flags P=%d W=%d U=%d\n",
++              va, PTE_ADDR(pgtab[k]),
++              1, (pgtab[k] & PTE_W) ? 1 : 0, (pgtab[k] & PTE_U) ? 1 : 0);
++      user_pages++;
++    }
++  }
++  cprintf("total user pages: %d, page-table pages: %d\n", user_pages, pt_pages);
++}
