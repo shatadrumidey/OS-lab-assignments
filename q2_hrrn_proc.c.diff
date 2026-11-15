@@ -1,0 +1,112 @@
+--- lab4/base/proc.c	2026-08-31 14:16:04.028705900 +0000
++++ lab4/q2-hrrn/proc.c	2026-08-31 14:43:33.231226300 +0000
+@@ -19,6 +19,7 @@
+ extern void trapret(void);
+ 
+ static void wakeup1(void *chan);
++static int resp_ratio(struct proc *);
+ 
+ void
+ pinit(void)
+@@ -88,6 +89,8 @@
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++    p->ctime = ticks;
++    p->burst_time = -1;
+ 
+   release(&ptable.lock);
+ 
+@@ -322,36 +325,40 @@
+ void
+ scheduler(void)
+ {
+-  struct proc *p;
++  struct proc *p, *best;
+   struct cpu *c = mycpu();
++  int best_rr, rr;
++
+   c->proc = 0;
+-  
++
+   for(;;){
+-    // Enable interrupts on this processor.
+     sti();
+-
+-    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
++
++    best = 0;
++    best_rr = -1;
+     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+       if(p->state != RUNNABLE)
+         continue;
++      rr = resp_ratio(p);
++      if(best == 0 || rr > best_rr){
++        best = p;                 // highest response ratio wins
++        best_rr = rr;
++      }
++    }
+ 
+-      // Switch to chosen process.  It is the process's job
+-      // to release ptable.lock and then reacquire it
+-      // before jumping back to us.
++    if(best != 0){
++      cprintf("HRRN: run pid %d with response ratio %d\n", best->pid, best_rr);
++      p = best;
+       c->proc = p;
+       switchuvm(p);
+       p->state = RUNNING;
+-
+-      swtch(&(c->scheduler), p->context);
++      swtch(&c->scheduler, p->context);
+       switchkvm();
+-
+-      // Process is done running for now.
+-      // It should have changed its p->state before coming back.
+       c->proc = 0;
+     }
+-    release(&ptable.lock);
+ 
++    release(&ptable.lock);
+   }
+ }
+ 
+@@ -532,3 +539,37 @@
+     cprintf("\n");
+   }
+ }
++
++// HRRN: response ratio * 100 with integer arithmetic
++static int
++resp_ratio(struct proc *p)
++{
++  int wait, burst;
++
++  if(p->burst_time <= 0)
++    return 0;                      // unset burst -> scheduled last
++  wait = ticks - p->ctime;
++  if(wait < 0)
++    wait = 0;
++  burst = p->burst_time;
++  return ((wait + burst) * 100) / burst;
++}
++
++int
++set_burst(int pid, int bt)
++{
++  struct proc *p;
++
++  if(bt < 1)
++    return -1;
++  acquire(&ptable.lock);
++  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++    if(p->state != UNUSED && p->pid == pid){
++      p->burst_time = bt;
++      release(&ptable.lock);
++      return 0;
++    }
++  }
++  release(&ptable.lock);
++  return -1;
++}

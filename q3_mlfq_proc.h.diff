@@ -1,0 +1,11 @@
+--- lab4/base/proc.h	2026-08-31 14:16:06.334911300 +0000
++++ lab4/q3-mlfq/proc.h	2026-08-31 14:53:32.998466100 +0000
+@@ -49,6 +49,8 @@
+   struct file *ofile[NOFILE];  // Open files
+   struct inode *cwd;           // Current directory
+   char name[16];               // Process name (debugging)
++int queue_level;  // MLFQ: 0 (high) .. 2 (low)
++int ticks_used;   // MLFQ: ticks used in current quantum
+ };
+ 
+ // Process memory is laid out contiguously, low addresses first:
