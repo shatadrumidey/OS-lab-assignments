@@ -1,0 +1,134 @@
+--- lab4/base/proc.c	2026-08-31 14:16:04.028705900 +0000
++++ lab4/q1-srtf/proc.c	2026-08-31 14:27:20.000000000 +0000
+@@ -19,6 +19,7 @@
+ extern void trapret(void);
+ 
+ static void wakeup1(void *chan);
++static int eff_rem(struct proc *);
+ 
+ void
+ pinit(void)
+@@ -88,6 +89,8 @@
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++    p->burst_time = -1;
++    p->remaining_time = -1;
+ 
+   release(&ptable.lock);
+ 
+@@ -322,36 +325,34 @@
+ void
+ scheduler(void)
+ {
+-  struct proc *p;
++  struct proc *p, *best;
+   struct cpu *c = mycpu();
++
+   c->proc = 0;
+-  
++
+   for(;;){
+-    // Enable interrupts on this processor.
+     sti();
+-
+-    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
++
++    best = 0;
+     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+       if(p->state != RUNNABLE)
+         continue;
++      if(best == 0 || eff_rem(p) < eff_rem(best))
++        best = p;                 // smallest remaining time wins
++    }
+ 
+-      // Switch to chosen process.  It is the process's job
+-      // to release ptable.lock and then reacquire it
+-      // before jumping back to us.
++    if(best != 0){
++      p = best;
+       c->proc = p;
+       switchuvm(p);
+       p->state = RUNNING;
+-
+-      swtch(&(c->scheduler), p->context);
++      swtch(&c->scheduler, p->context);
+       switchkvm();
+-
+-      // Process is done running for now.
+-      // It should have changed its p->state before coming back.
+       c->proc = 0;
+     }
+-    release(&ptable.lock);
+ 
++    release(&ptable.lock);
+   }
+ }
+ 
+@@ -532,3 +533,65 @@
+     cprintf("\n");
+   }
+ }
++
++// SRTF: unset remaining time counts as infinite => scheduled last
++static int
++eff_rem(struct proc *p)
++{
++  if(p->remaining_time < 0)
++    return 1000000000;
++  return p->remaining_time;
++}
++
++int
++set_burst(int pid, int bt)
++{
++  struct proc *p;
++
++  if(bt < 1)
++    return -1;
++  acquire(&ptable.lock);
++  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++    if(p->state != UNUSED && p->pid == pid){
++      p->burst_time = bt;
++      p->remaining_time = bt;     // countdown starts at the estimate
++      release(&ptable.lock);
++      return 0;
++    }
++  }
++  release(&ptable.lock);
++  return -1;
++}
++
++// SRTF: called on each timer tick from trap()
++void
++srtf_tick(void)
++{
++  struct proc *cur = myproc();
++  struct proc *q;
++  int preempt = 0;
++
++  if(cur == 0 || cur->state != RUNNING)
++    return;
++  if(holding(&ptable.lock))
++    return;
++  if(cur->remaining_time < 0){
++    yield();                      // undeclared burst -> default RR
++    return;
++  }
++
++  acquire(&ptable.lock);
++  if(cur->remaining_time > 0)
++    cur->remaining_time--;        // (d) decrement running process
++  for(q = ptable.proc; q < &ptable.proc[NPROC]; q++){
++    if(q->state == RUNNABLE && eff_rem(q) < eff_rem(cur)){
++      preempt = 1;                // (d) strictly smaller waiter exists
++      break;
++    }
++  }
++  release(&ptable.lock);
++
++  if(preempt)
++    yield();
++}
++

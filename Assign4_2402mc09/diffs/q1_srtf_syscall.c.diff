@@ -1,0 +1,18 @@
+--- lab4/base/syscall.c	2026-08-31 14:16:03.547339100 +0000
++++ lab4/q1-srtf/syscall.c	2026-08-31 14:23:47.821299000 +0000
+@@ -99,6 +99,7 @@
+ extern int sys_read(void);
+ extern int sys_sbrk(void);
+ extern int sys_sleep(void);
++extern int sys_set_burst(void);
+ extern int sys_unlink(void);
+ extern int sys_wait(void);
+ extern int sys_write(void);
+@@ -126,6 +127,7 @@
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_set_burst]   sys_set_burst,
+ };
+ 
+ void

@@ -1,0 +1,11 @@
+--- lab4/base/proc.h	2026-08-31 14:16:06.334911300 +0000
++++ lab4/q1-srtf/proc.h	2026-08-31 14:22:01.405402000 +0000
+@@ -49,6 +49,8 @@
+   struct file *ofile[NOFILE];  // Open files
+   struct inode *cwd;           // Current directory
+   char name[16];               // Process name (debugging)
++int burst_time;      // SRTF: declared burst (ticks)
++int remaining_time;  // SRTF: ticks left (-1 = unset)
+ };
+ 
+ // Process memory is laid out contiguously, low addresses first:

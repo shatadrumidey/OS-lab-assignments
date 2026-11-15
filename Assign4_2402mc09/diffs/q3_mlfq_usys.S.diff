@@ -1,0 +1,7 @@
+--- lab4/base/usys.S	2026-08-31 14:16:04.843149200 +0000
++++ lab4/q3-mlfq/usys.S	2026-08-31 14:55:17.018268100 +0000
+@@ -29,3 +29,4 @@
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(get_queue_level)
