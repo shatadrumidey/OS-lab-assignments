@@ -1,0 +1,15 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg3_q2/sysproc.c	2026-11-14 08:31:33.163651100 +0000
+@@ -89,3 +89,12 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_set_priority(void)
++{
++  int pid, pr;
++  if(argint(0, &pid) < 0) return -1;
++  if(argint(1, &pr) < 0) return -1;
++  return set_proc_priority(pid, pr);
++}

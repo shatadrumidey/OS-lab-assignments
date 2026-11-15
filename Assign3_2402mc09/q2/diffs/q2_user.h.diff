@@ -1,0 +1,10 @@
+--- xv6-clean/user.h	2026-08-24 14:26:16.939492100 +0000
++++ asg3_q2/user.h	2026-11-14 08:31:33.243422200 +0000
+@@ -23,6 +23,7 @@
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
++int set_priority(int,int);
+ 
+ // ulib.c
+ int stat(const char*, struct stat*);

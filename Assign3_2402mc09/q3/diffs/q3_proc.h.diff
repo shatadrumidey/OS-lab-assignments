@@ -1,0 +1,12 @@
+--- xv6-clean/proc.h	2026-08-24 14:26:16.685268900 +0000
++++ asg3_q3/proc.h	2026-11-14 08:57:52.153852500 +0000
+@@ -40,7 +40,8 @@
+   pde_t* pgdir;                // Page table
+   char *kstack;                // Bottom of kernel stack for this process
+   enum procstate state;        // Process state
+-  int pid;                     // Process ID
++  int pid;
++  int burst_time; // Asg3 Q3: estimated burst time (0=unset)                     // Process ID
+   struct proc *parent;         // Parent process
+   struct trapframe *tf;        // Trap frame for current syscall
+   struct context *context;     // swtch() here to run process

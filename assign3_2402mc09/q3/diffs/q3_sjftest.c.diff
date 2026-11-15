@@ -1,0 +1,39 @@
+--- /dev/null	2026-11-14 05:22:55.860081675 +0000
++++ asg3_q3/sjftest.c	2026-11-14 08:58:13.723832300 +0000
+@@ -0,0 +1,36 @@
++#include "types.h"
++#include "stat.h"
++#include "user.h"
++
++void
++work(int id, int bt)
++{
++  volatile int x = 0;
++  int i;
++  set_burst(getpid(), bt);
++  printf(1, "P%d (pid %d, burst %d) start\n", id, getpid(), bt);
++  // CPU-bound loop (duration independent of bt for testing)
++  for(i = 0; i < 50000000; i++) x++;
++  printf(1, "P%d (pid %d, burst %d) done\n", id, getpid(), bt);
++}
++
++int
++main(void)
++{
++  int i;
++  printf(1, "=== SJF Scheduler Test ===\n");
++  printf(1, "Forking 4 procs with burst times 40, 10, 30, 20\n\n");
++
++  if(fork() == 0){ work(1, 40); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(2, 10); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(3, 30); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(4, 20); exit(); }
++
++  wait(); wait(); wait(); wait();
++  printf(1, "\n=== Expected 'done' order: P2(10), P4(20), P3(30), P1(40) ===\n");
++  printf(1, "=== sjftest done ===\n");
++  exit();
++}

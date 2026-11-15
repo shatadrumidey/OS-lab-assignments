@@ -1,0 +1,38 @@
+--- /dev/null	2026-11-14 05:22:55.860081675 +0000
++++ asg3_q2/priotest.c	2026-11-14 08:31:37.485786600 +0000
+@@ -0,0 +1,35 @@
++#include "types.h"
++#include "stat.h"
++#include "user.h"
++
++void
++work(int id, int pr, int loops)
++{
++  volatile int x = 0;
++  int i;
++  set_priority(getpid(), pr);
++  printf(1, "P%d (pid %d, prio %d) start\n", id, getpid(), pr);
++  for(i = 0; i < loops; i++) x++;
++  printf(1, "P%d (pid %d, prio %d) done\n", id, getpid(), pr);
++}
++
++int
++main(void)
++{
++  int i;
++  printf(1, "=== Priority + Aging Scheduler Test ===\n");
++  printf(1, "Forking 4 procs with priorities 1,5,10,20\n\n");
++
++  if(fork() == 0){ work(1, 1, 30000000); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(2, 5, 30000000); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(3, 10, 30000000); exit(); }
++  for(i=0;i<2000000;i++);
++  if(fork() == 0){ work(4, 20, 30000000); exit(); }
++
++  wait(); wait(); wait(); wait();
++  printf(1, "\n=== Expected 'done' order: P1,P2,P3,P4 (priority order) ===\n");
++  printf(1, "=== priotest done ===\n");
++  exit();
++}

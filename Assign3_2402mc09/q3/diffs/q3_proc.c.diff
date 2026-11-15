@@ -1,0 +1,94 @@
+--- xv6-clean/proc.c	2026-08-24 14:26:16.677276700 +0000
++++ asg3_q3/proc.c	2026-11-14 08:57:52.153852500 +0000
+@@ -88,6 +88,7 @@
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++  p->burst_time = 0;
+ 
+   release(&ptable.lock);
+ 
+@@ -323,35 +324,45 @@
+ scheduler(void)
+ {
+   struct proc *p;
++  struct proc *best;
+   struct cpu *c = mycpu();
+   c->proc = 0;
+-  
++
+   for(;;){
+-    // Enable interrupts on this processor.
+     sti();
+-
+-    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
++
++    // SJF: Pick RUNNABLE process with smallest burst_time.
++    // burst_time == 0 means unset (lowest priority, scheduled last).
++    best = 0;
+     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+       if(p->state != RUNNABLE)
+         continue;
++      
++      int p_bt = p->burst_time;
++      if(p_bt <= 0) p_bt = 999999; // Treat unset as huge number
++      
++      if(best == 0){
++        best = p;
++      } else {
++        int best_bt = best->burst_time;
++        if(best_bt <= 0) best_bt = 999999;
++        
++        if(p_bt < best_bt)
++          best = p;
++      }
++    }
+ 
+-      // Switch to chosen process.  It is the process's job
+-      // to release ptable.lock and then reacquire it
+-      // before jumping back to us.
+-      c->proc = p;
+-      switchuvm(p);
+-      p->state = RUNNING;
+-
+-      swtch(&(c->scheduler), p->context);
++    if(best != 0){
++      c->proc = best;
++      switchuvm(best);
++      best->state = RUNNING;
++      swtch(&(c->scheduler), best->context);
+       switchkvm();
+-
+-      // Process is done running for now.
+-      // It should have changed its p->state before coming back.
+       c->proc = 0;
+     }
+-    release(&ptable.lock);
+ 
++    release(&ptable.lock);
+   }
+ }
+ 
+@@ -532,3 +543,21 @@
+     cprintf("\n");
+   }
+ }
++
++// Asg3 Q3: Set burst time for a process
++int
++set_burst(int pid, int bt)
++{
++  struct proc *p;
++  int found = 0;
++  acquire(&ptable.lock);
++  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++    if(p->pid == pid){
++      p->burst_time = bt;
++      found = 1;
++      break;
++    }
++  }
++  release(&ptable.lock);
++  return found ? 0 : -1;
++}
