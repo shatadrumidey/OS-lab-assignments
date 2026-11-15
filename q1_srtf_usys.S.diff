@@ -1,7 +1,0 @@
---- lab4/base/usys.S	2026-08-31 14:16:04.843149200 +0000
-+++ lab4/q1-srtf/usys.S	2026-08-31 14:23:47.917048800 +0000
-@@ -29,3 +29,4 @@
- SYSCALL(sbrk)
- SYSCALL(sleep)
- SYSCALL(uptime)
-+SYSCALL(set_burst)
