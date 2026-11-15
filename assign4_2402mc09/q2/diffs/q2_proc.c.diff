@@ -1,0 +1,107 @@
+--- xv6-clean/proc.c	2026-08-24 14:26:16.677276700 +0000
++++ asg4_q2/proc.c	2026-11-14 12:27:26.382544700 +0000
+@@ -88,6 +88,8 @@
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++  p->ctime = ticks;
++  p->burst_time = 0;
+ 
+   release(&ptable.lock);
+ 
+@@ -323,35 +325,56 @@
+ scheduler(void)
+ {
+   struct proc *p;
++  struct proc *best;
+   struct cpu *c = mycpu();
++  int wait, bt, rr, best_rr;
++
+   c->proc = 0;
+-  
++
+   for(;;){
+-    // Enable interrupts on this processor.
+     sti();
+-
+-    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
++
++    // HRRN: response ratio = ((wait + burst) * 100) / burst
++    // wait = ticks - ctime.  Only processes that declared a burst compete.
++    best = 0;
++    best_rr = -1;
+     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+       if(p->state != RUNNABLE)
+         continue;
++      if(p->burst_time <= 0)
++        continue;
++      wait = ticks - p->ctime;
++      if(wait < 0)
++        wait = 0;
++      bt = p->burst_time;
++      rr = ((wait + bt) * 100) / bt;
++      if(rr > best_rr){
++        best_rr = rr;
++        best = p;
++      }
++    }
+ 
+-      // Switch to chosen process.  It is the process's job
+-      // to release ptable.lock and then reacquire it
+-      // before jumping back to us.
+-      c->proc = p;
+-      switchuvm(p);
+-      p->state = RUNNING;
++    // Fallback: nobody declared a burst (e.g. init/sh) -> pick first RUNNABLE
++    if(best == 0){
++      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++        if(p->state == RUNNABLE){
++          best = p;
++          break;
++        }
++      }
++    }
+ 
+-      swtch(&(c->scheduler), p->context);
++    if(best != 0){
++      c->proc = best;
++      switchuvm(best);
++      best->state = RUNNING;
++      swtch(&(c->scheduler), best->context);
+       switchkvm();
+-
+-      // Process is done running for now.
+-      // It should have changed its p->state before coming back.
+       c->proc = 0;
+     }
+-    release(&ptable.lock);
+ 
++    release(&ptable.lock);
+   }
+ }
+ 
+@@ -532,3 +555,23 @@
+     cprintf("\n");
+   }
+ }
++
++// Asg4 Q2: declare expected burst time for a process
++int
++set_burst(int pid, int bt)
++{
++  struct proc *p;
++  int found = 0;
++  if(bt < 1)
++    return -1;
++  acquire(&ptable.lock);
++  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++    if(p->pid == pid){
++      p->burst_time = bt;
++      found = 1;
++      break;
++    }
++  }
++  release(&ptable.lock);
++  return found ? 0 : -1;
++}

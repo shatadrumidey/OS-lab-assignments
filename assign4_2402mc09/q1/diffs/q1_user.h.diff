@@ -1,0 +1,10 @@
+--- xv6-clean/user.h	2026-08-24 14:26:16.939492100 +0000
++++ asg4_srtf/user.h	2026-11-14 12:13:55.051707300 +0000
+@@ -23,6 +23,7 @@
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
++int set_burst(int,int);
+ 
+ // ulib.c
+ int stat(const char*, struct stat*);

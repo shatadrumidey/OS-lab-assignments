@@ -1,0 +1,16 @@
+--- xv6-clean/trap.c	2026-08-24 14:26:16.883835200 +0000
++++ asg4_q2/trap.c	2026-11-14 12:27:46.199091600 +0000
+@@ -102,9 +102,10 @@
+ 
+   // Force process to give up CPU on clock tick.
+   // If interrupts were on while locks held, would need to check nlock.
+-  if(myproc() && myproc()->state == RUNNING &&
+-     tf->trapno == T_IRQ0+IRQ_TIMER)
+-    yield();
++  // Asg4 Q2: HRRN is non-preemptive; timer must not force a context switch.
++  // if(myproc() && myproc()->state == RUNNING &&
++  //    tf->trapno == T_IRQ0+IRQ_TIMER)
++  //   yield();
+ 
+   // Check if the process has been killed since we yielded
+   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)

@@ -1,0 +1,14 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg4_q3/sysproc.c	2026-11-14 12:32:35.771042700 +0000
+@@ -89,3 +89,11 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_getqlevel(void)
++{
++  int pid;
++  if(argint(0, &pid) < 0) return -1;
++  return get_queue_level(pid);
++}

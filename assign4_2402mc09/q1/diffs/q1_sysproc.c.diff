@@ -1,0 +1,15 @@
+--- xv6-clean/sysproc.c	2026-08-24 14:26:16.859049500 +0000
++++ asg4_srtf/sysproc.c	2026-11-14 12:13:55.001197100 +0000
+@@ -89,3 +89,12 @@
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_set_burst(void)
++{
++  int pid, bt;
++  if(argint(0, &pid) < 0) return -1;
++  if(argint(1, &bt) < 0) return -1;
++  return set_burst(pid, bt);
++}

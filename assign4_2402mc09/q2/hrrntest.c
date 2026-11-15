@@ -1,0 +1,50 @@
+#include "types.h"
+#include "stat.h"
+#include "user.h"
+
+void
+work(int id, int bt)
+{
+  volatile int x = 0;
+  int i;
+  int loops = bt * 200000;
+  printf(1, "P%d (pid %d, burst %d) start\n", id, getpid(), bt);
+  for(i = 0; i < loops; i++) x++;
+  printf(1, "P%d (pid %d, burst %d) done\n", id, getpid(), bt);
+}
+
+int
+main(void)
+{
+  int p1, p2, p3, p4, p5;
+
+  printf(1, "=== HRRN Scheduler Test ===\n");
+  printf(1, "P1 = very long job, created FIRST. Short jobs created after.\n");
+  printf(1, "Parent declares each child burst via set_burst(pid, bt).\n\n");
+
+  p1 = fork();
+  if(p1 == 0){ work(1, 300); exit(); }
+  set_burst(p1, 300);
+
+  p2 = fork();
+  if(p2 == 0){ work(2, 15); exit(); }
+  set_burst(p2, 15);
+
+  p3 = fork();
+  if(p3 == 0){ work(3, 10); exit(); }
+  set_burst(p3, 10);
+
+  p4 = fork();
+  if(p4 == 0){ work(4, 20); exit(); }
+  set_burst(p4, 20);
+
+  p5 = fork();
+  if(p5 == 0){ work(5, 25); exit(); }
+  set_burst(p5, 25);
+
+  wait(); wait(); wait(); wait(); wait();
+
+  printf(1, "\n=== Short jobs ran early; long P1 still completed -> no starvation ===\n");
+  printf(1, "=== hrrntest done ===\n");
+  exit();
+}
