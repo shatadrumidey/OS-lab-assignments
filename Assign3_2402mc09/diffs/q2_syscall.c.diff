@@ -1,0 +1,19 @@
+--- xv6-clean/syscall.c	2026-08-24 14:26:16.837209800 +0000
++++ xv6-q2-prio/syscall.c	2026-08-24 15:23:31.432373300 +0000
+@@ -81,7 +81,7 @@
+     return -1;
+   return fetchstr(addr, pp);
+ }
+-
++extern int sys_set_priority(void);
+ extern int sys_chdir(void);
+ extern int sys_close(void);
+ extern int sys_dup(void);
+@@ -126,6 +126,7 @@
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_set_priority]   sys_set_priority,
+ };
+ 
+ void

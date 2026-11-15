@@ -1,0 +1,66 @@
+--- xv6-clean/proc.c	2026-08-24 14:26:16.677276700 +0000
++++ xv6-q1-fcfs/proc.c	2026-08-24 14:25:58.448721100 +0000
+@@ -88,6 +88,7 @@
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++  p->ctime = ticks;
+ 
+   release(&ptable.lock);
+ 
+@@ -323,38 +324,43 @@
+ scheduler(void)
+ {
+   struct proc *p;
+-  struct cpu *c = mycpu();
++  struct proc *first_proc; 
++  struct cpu *c = mycpu(); // <--- This was the missing line!
++
+   c->proc = 0;
+-  
++
+   for(;;){
+     // Enable interrupts on this processor.
+     sti();
+ 
+-    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
++
++    first_proc = 0;
++
++    // Loop 1: Find the RUNNABLE process with the minimum ctime
+     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+       if(p->state != RUNNABLE)
+         continue;
+ 
+-      // Switch to chosen process.  It is the process's job
+-      // to release ptable.lock and then reacquire it
+-      // before jumping back to us.
++      if(first_proc == 0 || p->ctime < first_proc->ctime){
++        first_proc = p;
++      }
++    }
++
++    // If we found a valid process, run it to completion
++    if(first_proc != 0) {
++      p = first_proc;
+       c->proc = p;
+       switchuvm(p);
+       p->state = RUNNING;
+-
+       swtch(&(c->scheduler), p->context);
+       switchkvm();
+-
+-      // Process is done running for now.
+-      // It should have changed its p->state before coming back.
+       c->proc = 0;
+     }
+-    release(&ptable.lock);
+ 
++    release(&ptable.lock);
+   }
+ }
+-
+ // Enter scheduler.  Must hold only ptable.lock
+ // and have changed proc->state. Saves and restores
+ // intena because intena is a property of this
